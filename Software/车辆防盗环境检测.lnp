@@ -1,0 +1,7 @@
+"STARTUP.obj",
+"main.obj",
+"LCD1602.obj",
+"uart2.obj",
+"sim800.obj" 
+TO "³µÁ¾·ÀµÁ»·¾³¼ì²â" 
+RAMSIZE(256) 

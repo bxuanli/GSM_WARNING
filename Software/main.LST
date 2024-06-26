@@ -1,0 +1,341 @@
+C51 COMPILER V9.02   MAIN                                                                  03/17/2020 20:04:01 PAGE 1   
+
+
+C51 COMPILER V9.02, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE main.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include<12C5A60S2.h>
+   2          #include<intrins.h>
+   3          #include<ADC.h>
+   4          #include "uart2.h"      
+   5          #include "sim800.h"     
+   6          /********¼×È©´®¿Ú½ÓÊÕÊý¾Ý»º´æ**********/
+   7          unsigned char idata ZE08_receive[30];
+   8          /********¼×È©´®¿Ú½ÓÊÕ¼ÆÊýÆ÷**********/
+   9          unsigned char  ZE08_DATA_count; 
+  10          bit kg_flag = 0;
+  11          unsigned char str_ze08[5];//¼×È©Öµ
+  12          unsigned char str_co[5];//Öµ
+  13          unsigned char P_baojing = 100;  //¼×È©±¨¾¯Öµ
+  14          unsigned int  C_baojing = 100;
+  15          unsigned char P_buff[4];
+  16          unsigned char C_buff[4];
+  17          unsigned char moshi=0;
+  18          unsigned char time;
+  19          int ZE08,Value1,Value2;
+  20           //unsigned char dat = 0x00;      //ADÖµ
+  21          bit qx_flag = 1;      //±¨¾¯¿ª¹Ø Ä¬ÈÏ¿ª
+  22          bit flag_1s ;      //±¨¾¯¿ª¹Ø Ä¬ÈÏ¿ª
+  23          sbit  shezhi = P3^7;
+  24          sbit  jia    = P3^6;
+  25          sbit  jian   = P3^5;
+  26          sbit  quxiao = P3^4;
+  27          sbit  BUZZER = P3^2;
+  28          sbit  LED_P  = P1^4;//   ¼×È©±¨¾¯Ö¸Ê¾µÆ
+  29          sbit  LED_C  = P1^5;//  ÑÌÎí±¨¾¯Ö¸Ê¾µÆ
+  30          sbit  HW  = P1^6;//  ºìÍâ¸ÐÓ¦
+  31          unsigned int sum=0;
+  32          unsigned char IntToString(unsigned char *str, int dat);
+  33          extern void InitLcd1602();
+  34          extern void LcdShowStr(unsigned char x, unsigned char y, unsigned char *str);
+  35          extern void LcdWriteCmd(unsigned char cmd);
+  36          unsigned char *content1 =  "Warning: Vehicle anomaly!\r\n";
+  37          
+  38          void Key_set_scan()
+  39          {
+  40   1              if(quxiao==0)
+  41   1              {
+  42   2                 Delay_Ms(10);
+  43   2      
+  44   2                      if(quxiao==0)
+  45   2                      {
+  46   3                         while(!quxiao);
+  47   3                        qx_flag =~ qx_flag;
+  48   3                      }
+  49   2              }  
+  50   1              if(shezhi==0)
+  51   1              {
+  52   2                 Delay_Ms(10);
+  53   2                      if(shezhi==0)
+  54   2                      {  
+  55   3                         while(!shezhi);
+C51 COMPILER V9.02   MAIN                                                                  03/17/2020 20:04:01 PAGE 2   
+
+  56   3                         LcdWriteCmd(0x01);  //ÇåÆÁ
+  57   3                         moshi++;
+  58   3                         if(moshi >= 3)moshi = 0;
+  59   3                         if(moshi == 0)
+  60   3                         { 
+  61   4                    LcdShowStr(0, 0,"HCHO:   ppm T:  ");
+  62   4                    LcdShowStr(0, 1,"Smoke:    ppm");
+  63   4                         }
+  64   3                      
+  65   3                         else if(moshi == 1)
+  66   3                         {    LcdWriteCmd(0x01);  //ÇåÆÁ
+  67   4                              Delay_Ms(10);
+  68   4                             LcdShowStr(0, 0,"                ");
+  69   4                                 LcdShowStr(0, 1,"Set_H:    ppm   ");
+  70   4                         }
+  71   3                         else if(moshi == 2)
+  72   3                         {   LcdWriteCmd(0x01);  //ÇåÆÁ
+  73   4                             Delay_Ms(10);
+  74   4                             LcdShowStr(0, 0,"                ");
+  75   4                                 LcdShowStr(0, 1,"Set_S:    ppm   ");
+  76   4                         }                                    
+  77   3                      }
+  78   2              }
+  79   1              
+  80   1              if(jia==0)
+  81   1              {
+  82   2                 Delay_Ms(80);
+  83   2                      if(jia==0)
+  84   2                      {                               
+  85   3                              if(moshi==1)
+  86   3                              {
+  87   4                               P_baojing++ ;
+  88   4                               if( P_baojing>=999 )P_baojing =999;
+  89   4                              }
+  90   3      
+  91   3                              if(moshi==2)
+  92   3                              {
+  93   4                               C_baojing++ ;
+  94   4                               if( C_baojing>=999 )C_baojing =999;
+  95   4                              }               
+  96   3                       }
+  97   2               }
+  98   1               if(jian == 0)
+  99   1               {
+ 100   2                  Delay_Ms(80);
+ 101   2                 if(jian == 0)
+ 102   2                 {
+ 103   3                     
+ 104   3                              if(moshi==1)
+ 105   3                              {
+ 106   4                               P_baojing-- ;
+ 107   4                               if( P_baojing<=0 )P_baojing =0;
+ 108   4                              }
+ 109   3                              if(moshi==2)
+ 110   3                              {
+ 111   4                               C_baojing-- ;
+ 112   4                               if( C_baojing<=0 )C_baojing =0;
+ 113   4                              }
+ 114   3                 }
+ 115   2               }
+ 116   1                       
+ 117   1      }
+C51 COMPILER V9.02   MAIN                                                                  03/17/2020 20:04:01 PAGE 3   
+
+ 118          
+ 119          /*------------------------------------------------
+ 120                              ¶¨Ê±Æ÷³õÊ¼»¯×Ó³ÌÐò
+ 121          ------------------------------------------------*/
+ 122          void Init_Timer0(void)
+ 123          {
+ 124   1       TMOD |= 0x01;    //Ê¹ÓÃÄ£Ê½1£¬16Î»¶¨Ê±Æ÷£¬Ê¹ÓÃ"|"·ûºÅ¿ÉÒÔÔÚÊ¹ÓÃ¶à¸ö¶¨Ê±Æ÷Ê±²»ÊÜÓ°Ïì                 
+ 125   1       TH0=(65536-5000)/256;            //ÖØÐÂ¸³Öµ5ms
+ 126   1       TL0=(65536-5000)%256;
+ 127   1       EA=1;            //×ÜÖÐ¶Ï´ò¿ª
+ 128   1       ET0=1;           //¶¨Ê±Æ÷ÖÐ¶Ï´ò¿ª
+ 129   1       TR0=1;           //¶¨Ê±Æ÷¿ª¹Ø´ò¿ª
+ 130   1       PT0=1;           //ÓÅÏÈ¼¶´ò¿ª
+ 131   1      }
+ 132          /************Ö÷º¯Êý****************/
+ 133          void main()
+ 134          {         
+ 135   1         char len,a,i;
+ 136   1         char buff[3];
+ 137   1      //   U8 m;
+ 138   1        InitLcd1602();     //³õÊ¼»¯Òº¾§
+ 139   1        LcdShowStr(0,0,"  System init   ");
+ 140   1        LcdShowStr(0,1,"  please wait   ");
+ 141   1        for(i = 0;i < 15;i++)//µÈ´ýÍøÂçÎÈ¶¨
+ 142   1       {
+ 143   2                      Delay_Ms(1000);
+ 144   2        }
+ 145   1         InitLcd1602();   
+ 146   1        LcdShowStr(0, 0,"HCHO:   ppm T:  ");
+ 147   1        LcdShowStr(0, 1,"Smoke:   ppm    ");
+ 148   1      
+ 149   1        Init_Timer0();        //¶¨Ê±Æ÷³õÊ¼»¯
+ 150   1        Uart_Init();   //ÅäÖÃ²¨ÌØÂÊÎª9600
+ 151   1        Uart_Init_2(); 
+ 152   1        ADC_Init(ADC_PORT0);
+ 153   1       
+ 154   1        while(1)
+ 155   1       {
+ 156   2         
+ 157   2       Key_set_scan();//°´¼üÉ¨Ãè
+ 158   2       if(moshi == 0)   //ÉèÖÃÄ£Ê½ÇÐ»»
+ 159   2       {  
+ 160   3          len = IntToString(str_ze08,ZE08); //×ª»»³É×Ö·û´®
+ 161   3          while (len < 3)                  //ÓÃ¿Õ¸ñ²¹Æëµ½5¸ö×Ö·û³¤¶È
+ 162   3          {
+ 163   4              str_ze08[len++] = ' ';
+ 164   4          }
+ 165   3          str_ze08[len] = '\0';              //Ìí¼Ó×Ö·û´®½áÊø·û
+ 166   3          LcdShowStr(5, 0, str_ze08); //¼×È©ÏÔÊ¾µ½Òº¾§ÆÁÉÏ 
+ 167   3                       
+ 168   3              Value2 = GetADCResult(ADC_CH0);   //yanwu ¼ìâ
+ 169   3          Value2 =  (float)(Value2/2);//Å¨¶ÈÐ£×¼
+ 170   3          len = IntToString(str_co,Value2); //×ª»»³É×Ö·û´®
+ 171   3          while (len < 3)               //ÓÃ¿Õ¸ñ²¹Æëµ½3¸ö×Ö·û³¤¶È
+ 172   3          {
+ 173   4              str_co[len++] = ' ';
+ 174   4          }
+ 175   3           str_co[len] = '\0';              //Ìí¼Ó×Ö·û´®½áÊø·û
+ 176   3       
+ 177   3         LcdShowStr(6, 1, str_co); //ÑÌÎíÅ¨¶ÈÏÔÊ¾µ½Òº¾§ÆÁÉÏ  
+ 178   3         if(qx_flag == 1)
+ 179   3         {
+C51 COMPILER V9.02   MAIN                                                                  03/17/2020 20:04:01 PAGE 4   
+
+ 180   4         if((ZE08>=P_baojing)||(Value2>=C_baojing)) BUZZER = 0; else BUZZER = 1;
+ 181   4         }
+ 182   3         else BUZZER = 1;
+ 183   3       
+ 184   3         if(ZE08>=P_baojing)      LED_P = 0;   else  LED_P = 1;       
+ 185   3         if(Value2>=C_baojing)     LED_C = 0;   else  LED_C = 1;
+ 186   3      
+ 187   3          if(HW==0)
+ 188   3              {       
+ 189   4                if(flag_1s==1)
+ 190   4                {
+ 191   5                 flag_1s=0;
+ 192   5                 time++; if(time>99) time=99;
+ 193   5                 buff[0]=time/10+0x30;
+ 194   5                 buff[1]=time%10+0x30;
+ 195   5                 buff[2]=     '\0';
+ 196   5                 LcdShowStr(14, 0,buff);
+ 197   5                 if(time>=5)
+ 198   5                 {
+ 199   6                        if(a==0)
+ 200   6                        {  
+ 201   7                         a=1;
+ 202   7                         Send_message(content1);        //·¢±¨¾¯¶ÌÐÅ
+ 203   7                         //time=0;               
+ 204   7                        }
+ 205   6                 }
+ 206   5                }
+ 207   4              }
+ 208   3              else 
+ 209   3              {
+ 210   4                 time=0;
+ 211   4                 buff[0]=time/10+0x30;
+ 212   4                 buff[1]=time%10+0x30;
+ 213   4                 buff[2]=     '\0';
+ 214   4                 LcdShowStr(14, 0,buff);
+ 215   4              }
+ 216   3              
+ 217   3        }
+ 218   2      
+ 219   2         else if(moshi == 1)   //ÉèÖÃ¼×È©Å¨¶ÈÉÏÏÞÄ£Ê½
+ 220   2         {
+ 221   3         P_buff[0] = P_baojing/100+0x30;
+ 222   3         P_buff[1] = P_baojing%100/10+0x30;
+ 223   3         P_buff[2] = P_baojing%10+0x30;
+ 224   3         P_buff[4] = '\0';
+ 225   3         LcdShowStr(6, 1,P_buff);
+ 226   3         }
+ 227   2         else if(moshi == 2)   //ÉèÖÃÑÌÎíÅ¨¶ÈÉÏÏÞÄ£Ê½
+ 228   2         {
+ 229   3         C_buff[0] = C_baojing/100+0x30;
+ 230   3         C_buff[1] = C_baojing%100/10+0x30;
+ 231   3         C_buff[2] = C_baojing%10+0x30;
+ 232   3         C_buff[4] = '\0';
+ 233   3         LcdShowStr(6, 1,C_buff);
+ 234   3         }                                                                                                       
+ 235   2       }
+ 236   1      }
+ 237          /* ÕûÐÍÊý×ª»»Îª×Ö·û´®£¬str-×Ö·û´®Ö¸Õë£¬dat-´ý×ª»»Êý£¬·µ»ØÖµ-×Ö·û´®³¤¶È */
+ 238          unsigned char IntToString(unsigned char *str, int dat)
+ 239          {
+ 240   1          signed char i = 0;
+ 241   1          unsigned char len = 0;
+C51 COMPILER V9.02   MAIN                                                                  03/17/2020 20:04:01 PAGE 5   
+
+ 242   1          unsigned char buf[6];
+ 243   1          
+ 244   1          if (dat < 0)  //Èç¹ûÎª¸ºÊý£¬Ê×ÏÈ
+ 245   1              
+ 246   1          {
+ 247   2              dat = -dat;
+ 248   2              *str++ = '-';
+ 249   2              len++;
+ 250   2          }
+ 251   1          do {          //ÏÈ×ª»»ÎªµÍÎ»ÔÚÇ°µÄÊ®½øÖÆÊý×é
+ 252   2              buf[i++] = dat % 10;
+ 253   2              dat /= 10;
+ 254   2          } while (dat > 0);
+ 255   1          len += i;     //i×îºóµÄÖµ¾ÍÊÇÓÐÐ§×Ö·ûµÄ¸öÊý
+ 256   1          while (i-- > 0)   //½«Êý×éÖµ×ª»»ÎªASCIIÂë·´Ïò¿½±´µ½½ÓÊÕÖ¸ÕëÉÏ
+ 257   1          {
+ 258   2              *str++ = buf[i] + '0';
+ 259   2          }
+ 260   1      
+ 261   1          *str = '\0';  //Ìí¼Ó×Ö·û´®½áÊø·û
+ 262   1          
+ 263   1          return len;   //·µ»Ø×Ö·û´®³¤¶È
+ 264   1      }
+ 265          
+ 266          /************´®ÐÐ¿Ú2ÖÐ¶Ï´¦Àíº¯Êý*************/
+ 267          void UART_2Interrupt(void) interrupt 8
+ 268          {
+ 269   1              unsigned char UART_data;
+ 270   1              if(S2CON&S2RI)
+ 271   1              {
+ 272   2                UART_data=S2BUF;
+ 273   2                if(UART_data==0xFF)
+ 274   2                      {
+ 275   3                              if((ZE08_receive[0]==0x17)&&(ZE08_receive[1]==0x04))
+ 276   3                              {
+ 277   4                                 ZE08 = ZE08_receive[3]*256+ZE08_receive[4];                     
+ 278   4                              }
+ 279   3                      
+ 280   3                              ZE08_DATA_count=0;
+ 281   3                      }
+ 282   2                      else
+ 283   2                      {
+ 284   3                              ZE08_receive[ZE08_DATA_count]=UART_data;
+ 285   3                              ZE08_DATA_count++;
+ 286   3                      }
+ 287   2              
+ 288   2              }
+ 289   1              S2CON&=~S2RI;
+ 290   1      }
+ 291          /*------------------------------------------------
+ 292              ¶¨Ê±Æ÷ÖÐ¶Ï×Ó³ÌÐò£¨¶¨Ê±1ms£©
+ 293          ------------------------------------------------*/
+ 294          void Timer0_isr(void) interrupt 1 
+ 295          {
+ 296   1         static unsigned int s1j;
+ 297   1         TH0=(65536-5000)/256;         //ÖØÐÂ¸³Öµ 5ms
+ 298   1         TL0=(65536-5000)%256;
+ 299   1          
+ 300   1          s1j++;   
+ 301   1              if(s1j>=1300)
+ 302   1         {
+ 303   2           s1j = 0;
+C51 COMPILER V9.02   MAIN                                                                  03/17/2020 20:04:01 PAGE 6   
+
+ 304   2               flag_1s = 1;
+ 305   2                      
+ 306   2          }
+ 307   1      
+ 308   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1236    ----
+   CONSTANT SIZE    =    161    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     37      18
+   IDATA SIZE       =     30    ----
+   BIT SIZE         =      3    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

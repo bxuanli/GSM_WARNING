@@ -1,0 +1,51 @@
+C51 COMPILER V9.02   UART2                                                                 03/17/2020 20:04:01 PAGE 1   
+
+
+C51 COMPILER V9.02, COMPILATION OF MODULE UART2
+OBJECT MODULE PLACED IN uart2.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE uart2.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1           #include <12C5A60S2.h>
+   2           #include "uart2.h"
+   3                  
+   4           void Uart_Init_2 (void)
+   5           {
+   6   1          
+   7   1              S2CON = 0x50;   //串口2工作在方式1  10位异步收发 S2REN=1允许接收
+   8   1          BRT = 0xFd;     //独立波特率发生器初值 9600
+   9   1          AUXR = 0x10;    //BRTR=1 独立波特率发生器开始计数
+  10   1          IE2 =0x01;      //开串口2中断  ES2=1
+  11   1       }
+  12           /****************串行口2发送****************/    
+  13          void UART_2SendOneByte(unsigned char c)
+  14          {
+  15   1          S2BUF = c;
+  16   1          while(!(S2CON&S2TI));  //若S2TI=0，在此等待
+  17   1          S2CON&=~S2TI;         //S2TI=0
+  18   1      }
+  19          /********串口2字符串发送函数***********/
+  20          void Send_String_2(unsigned char *str)          
+  21          {
+  22   1              while(*str != '\0')             
+  23   1              {
+  24   2                      UART_2SendOneByte(*str);                        
+  25   2                      *str=*str++;            
+  26   2              }
+  27   1              *str = 0;                                 
+  28   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     81    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       3
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
